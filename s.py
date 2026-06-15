@@ -14,6 +14,7 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 import requests
 from openai import OpenAI
+import plotly.graph_objects as go
 
 
 # ================= PAGE CONFIG =================
@@ -28,14 +29,25 @@ st.set_page_config(
 st.markdown("""
 <style>
 
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+html, body, [class*="css"]{
+    font-family:'Poppins',sans-serif;
+}
+
 /* Main App */
 .stApp{
-    background: linear-gradient(
-        135deg,
-        #0b1020,
-        #111827,
-        #161b33
-    );
+    background:
+    radial-gradient(circle at top right,
+    rgba(124,58,237,.18),
+    transparent 30%),
+
+    radial-gradient(circle at bottom left,
+    rgba(168,85,247,.12),
+    transparent 30%),
+
+    #0b1020;
+
     color:white;
 }
 
@@ -53,148 +65,618 @@ footer{
     max-width:95%;
 }
 
-/* Title */
-.main-title{
-    color:white;
-    font-size:42px;
-    font-weight:700;
-    text-align:center;
-    margin-bottom:30px;
+/* Titles */
+h1{
+    font-weight:800 !important;
+    letter-spacing:-1px;
 }
 
-/* Dashboard Cards */
+h2{
+    font-weight:700 !important;
+}
+
+h3{
+    font-weight:600 !important;
+}
+
+/* KPI Cards */
 div[data-testid="metric-container"]{
-    background: rgba(22,27,51,0.85);
-    border:1px solid rgba(138,92,246,0.25);
-    border-radius:20px;
-    padding:20px;
+    background:rgba(20,25,50,.85);
+    border:1px solid rgba(168,85,247,.2);
+    border-radius:24px;
+    padding:22px;
+    backdrop-filter:blur(12px);
+
     box-shadow:
-        0 0 15px rgba(138,92,246,.25);
+    0 0 25px rgba(124,58,237,.15);
+
+    transition:.3s;
+}
+
+div[data-testid="metric-container"]:hover{
+    transform:translateY(-4px);
+
+    box-shadow:
+    0 0 35px rgba(168,85,247,.35);
 }
 
 /* Buttons */
 .stButton > button{
     width:100%;
-    border-radius:16px;
+    height:58px;
+
     border:none;
-    background:linear-gradient(
-        135deg,
-        #5B21B6,
-        #7C3AED,
-        #A855F7
+    border-radius:18px;
+
+    background:
+    linear-gradient(
+    135deg,
+    #6D28D9,
+    #8B5CF6
     );
+
     color:white;
+    font-size:15px;
     font-weight:600;
-    height:55px;
-    transition:0.3s;
+
+    transition:.3s;
 }
 
 .stButton > button:hover{
     transform:translateY(-3px);
+
     box-shadow:
-      0 0 20px rgba(168,85,247,.6);
+    0 0 30px rgba(168,85,247,.55);
 }
 
 /* Sidebar */
 section[data-testid="stSidebar"]{
     background:
     linear-gradient(
-        180deg,
-        #0f172a,
-        #111827
+    180deg,
+    #0B1020,
+    #131B35
     );
+
     border-right:
-    1px solid rgba(168,85,247,.3);
+    1px solid rgba(168,85,247,.15);
 }
 
-/* Input Fields */
+/* Inputs */
 .stTextInput input,
 .stNumberInput input,
 .stDateInput input{
-    background:#1a1f38;
+    background:#161B33;
     color:white;
-    border-radius:12px;
-    border:1px solid #7C3AED;
+
+    border-radius:15px;
+
+    border:1px solid
+    rgba(168,85,247,.25);
 }
 
 /* Selectbox */
 .stSelectbox div[data-baseweb="select"]{
-    background:#1a1f38;
-    border-radius:12px;
+    background:#161B33;
+    border-radius:15px;
 }
 
-/* DataFrame */
+/* Dataframe */
 [data-testid="stDataFrame"]{
-    border-radius:18px;
+    border-radius:20px;
     overflow:hidden;
-    border:1px solid rgba(168,85,247,.3);
+    border:1px solid rgba(168,85,247,.2);
 }
 
 /* Chat Messages */
 [data-testid="stChatMessage"]{
     background:rgba(20,25,50,.85);
+
     border-radius:18px;
-    border:1px solid rgba(168,85,247,.2);
+
+    border:1px solid rgba(168,85,247,.15);
+
     padding:12px;
 }
 
-/* Success Card */
+/* Success Box */
 .safe-box{
     background:
     linear-gradient(
-        135deg,
-        #059669,
-        #10B981
+    135deg,
+    #059669,
+    #10B981
     );
+
     padding:25px;
+
     border-radius:18px;
+
     text-align:center;
+
     font-size:24px;
+
     font-weight:bold;
+
     color:white;
 }
 
-/* Danger Card */
+/* Danger Box */
 .danger-box{
     background:
     linear-gradient(
-        135deg,
-        #DC2626,
-        #EF4444
+    135deg,
+    #DC2626,
+    #EF4444
     );
+
     padding:25px;
+
     border-radius:18px;
+
     text-align:center;
+
     font-size:24px;
+
     font-weight:bold;
+
     color:white;
 }
 
-/* Charts */
-.element-container{
+/* Glass Card */
+.glass-card{
+    background:
+    rgba(20,25,50,.72);
+
+    backdrop-filter:blur(18px);
+
+    border:
+    1px solid rgba(168,85,247,.15);
+
+    border-radius:30px;
+
+    padding:30px;
+
+    box-shadow:
+    0 0 30px rgba(124,58,237,.15);
+
+    transition:.3s;
+}
+
+.glass-card:hover{
+    transform:translateY(-5px);
+
+    box-shadow:
+    0 0 40px rgba(168,85,247,.35);
+}
+
+/* Finance Card */
+.fin-card{
+    background:
+    linear-gradient(
+    145deg,
+    rgba(25,25,45,.95),
+    rgba(15,15,35,.95)
+    );
+
+    border-radius:28px;
+
+    border:
+    1px solid rgba(168,85,247,.15);
+
+    box-shadow:
+    0 0 25px rgba(124,58,237,.18),
+    0 0 60px rgba(124,58,237,.08);
+
+    padding:25px;
+
+    backdrop-filter:blur(20px);
+}
+
+/* Animations */
+@keyframes fadeUp{
+    from{
+        opacity:0;
+        transform:translateY(20px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.glass-card,
+.fin-card,
+div[data-testid="metric-container"]{
+    animation:fadeUp .7s ease;
+}
+
+/* ================= EXTRA PREMIUM THEME ================= */
+
+/* Premium Buttons */
+.stButton > button{
+    background:linear-gradient(
+        135deg,
+        #5B21B6 0%,
+        #7C3AED 50%,
+        #A855F7 100%
+    ) !important;
+
+    color:white !important;
+
+    font-weight:700 !important;
+
+    letter-spacing:.5px;
+
+    box-shadow:
+        0 0 15px rgba(124,58,237,.35);
+
+    transition:all .3s ease !important;
+}
+
+.stButton > button:hover{
+
+    background:linear-gradient(
+        135deg,
+        #6D28D9,
+        #8B5CF6,
+        #C084FC
+    ) !important;
+
+    transform:
+        translateY(-4px)
+        scale(1.02);
+
+    box-shadow:
+        0 0 35px rgba(168,85,247,.65);
+}
+
+/* KPI Cards */
+div[data-testid="metric-container"]{
+
+    border-left:
+    4px solid #A855F7 !important;
+
+    background:
+    linear-gradient(
+        145deg,
+        rgba(25,25,45,.95),
+        rgba(15,15,35,.95)
+    ) !important;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"]{
+
+    background:
+    linear-gradient(
+        180deg,
+        #0B1020,
+        #131B35
+    ) !important;
+
+    box-shadow:
+        5px 0 30px rgba(168,85,247,.12);
+}
+
+/* Sidebar Text */
+section[data-testid="stSidebar"] label{
+    color:white !important;
+    font-weight:600 !important;
+}
+
+/* Inputs */
+.stTextInput input,
+.stNumberInput input,
+.stDateInput input{
+
+    background:
+    rgba(22,27,51,.95) !important;
+
+    border:
+    1px solid rgba(168,85,247,.25) !important;
+
+    border-radius:15px !important;
+
+    box-shadow:
+    inset 0 0 10px rgba(168,85,247,.05);
+}
+
+/* Input Focus */
+.stTextInput input:focus,
+.stNumberInput input:focus,
+.stDateInput input:focus{
+
+    border-color:#A855F7 !important;
+
+    box-shadow:
+    0 0 15px rgba(168,85,247,.45) !important;
+}
+
+/* Select Box */
+.stSelectbox div[data-baseweb="select"]{
+
+    background:#161B33 !important;
+
+    border-radius:15px !important;
+
+    border:
+    1px solid rgba(168,85,247,.20);
+}
+
+/* Glass Card Upgrade */
+.glass-card{
+
+    background:
+    linear-gradient(
+        145deg,
+        rgba(22,27,51,.92),
+        rgba(15,20,35,.92)
+    ) !important;
+
+    border:
+    1px solid rgba(168,85,247,.15);
+
+    box-shadow:
+    0 0 30px rgba(124,58,237,.20);
+
+    position:relative;
+}
+
+/* Animated Border */
+.glass-card::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    border-radius:30px;
+
+    padding:1px;
+
+    background:
+    linear-gradient(
+        135deg,
+        transparent,
+        rgba(168,85,247,.5),
+        transparent
+    );
+
+    -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+
+    -webkit-mask-composite:xor;
+
+    pointer-events:none;
+}
+
+/* Heading Glow */
+h1,h2,h3{
+
+    text-shadow:
+    0 0 12px rgba(168,85,247,.25);
+}
+
+/* Text Selection */
+::selection{
+
+    background:#A855F7;
+
+    color:white;
+}
+
+/* Premium Divider */
+hr{
+
+    border:none;
+
+    height:1px;
+
+    background:
+    linear-gradient(
+        90deg,
+        transparent,
+        rgba(168,85,247,.4),
+        transparent
+    );
+}
+            
+/* ================= PREMIUM UI UPGRADE ================= */
+
+/* Animated Background */
+.stApp{
+    background-size:400% 400%;
+    animation:bgmove 15s ease infinite;
+}
+
+@keyframes bgmove{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+/* Premium Scrollbar */
+::-webkit-scrollbar{
+    width:8px;
+}
+
+::-webkit-scrollbar-track{
+    background:#111827;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#7C3AED;
     border-radius:20px;
 }
 
-/* Cards */
-.glass-card{
-    background:rgba(20,25,50,.8);
-    backdrop-filter:blur(14px);
-    border:1px solid rgba(168,85,247,.2);
-    border-radius:24px;
-    padding:25px;
-    box-shadow:
-        0 0 25px rgba(168,85,247,.15);
-            }
-            
-.glass-card:hover{
-    transform:translateY(-5px);
-    transition:0.3s;
-    box-shadow:0 0 25px rgba(168,85,247,.5);
+::-webkit-scrollbar-thumb:hover{
+    background:#A855F7;
 }
-    
+
+/* Glass Floating Effect */
+.glass-card,
+.fin-card{
+    position:relative;
+    overflow:hidden;
+}
+
+.glass-card::before,
+.fin-card::before{
+    content:"";
+    position:absolute;
+    top:-50%;
+    left:-50%;
+    width:200%;
+    height:200%;
+
+    background:
+    linear-gradient(
+        45deg,
+        transparent,
+        rgba(255,255,255,.04),
+        transparent
+    );
+
+    transform:rotate(25deg);
+    pointer-events:none;
+}
+
+/* Premium Glass Glow */
+.glass-card{
+    box-shadow:
+        0 0 20px rgba(168,85,247,.20),
+        0 0 40px rgba(168,85,247,.08),
+        inset 0 0 1px rgba(255,255,255,.15);
+}
+
+/* Sidebar Glow */
+section[data-testid="stSidebar"]{
+    box-shadow:
+        5px 0 30px rgba(168,85,247,.12);
+
+    backdrop-filter:blur(25px);
+}
+
+/* KPI Shine Effect */
+div[data-testid="metric-container"]{
+    position:relative;
+    overflow:hidden;
+}
+
+div[data-testid="metric-container"]::before{
+    content:"";
+
+    position:absolute;
+    top:-120%;
+    left:-50%;
+
+    width:60%;
+    height:300%;
+
+    background:
+    linear-gradient(
+        rgba(255,255,255,0),
+        rgba(255,255,255,.08),
+        rgba(255,255,255,0)
+    );
+
+    transform:rotate(25deg);
+}
+
+/* Better KPI Hover */
+div[data-testid="metric-container"]:hover{
+    transform:translateY(-5px);
+
+    box-shadow:
+        0 0 35px rgba(168,85,247,.40);
+}
+
+/* Input Focus Glow */
+.stTextInput input:focus,
+.stNumberInput input:focus,
+.stDateInput input:focus{
+
+    border-color:#A855F7 !important;
+
+    box-shadow:
+        0 0 15px rgba(168,85,247,.40) !important;
+}
+
+/* Selectbox Focus */
+.stSelectbox{
+    transition:.3s;
+}
+
+/* Better Button Hover */
+.stButton > button:hover{
+    transform:
+        translateY(-4px)
+        scale(1.02);
+
+    box-shadow:
+        0 0 35px rgba(168,85,247,.60);
+}
+
+/* Glass Card Hover */
+.glass-card:hover,
+.fin-card:hover{
+
+    transform:
+        translateY(-6px)
+        scale(1.01);
+
+    transition:.35s;
+
+    box-shadow:
+        0 0 50px rgba(168,85,247,.30);
+}
+
+/* Fade Animation */
+@keyframes fadeUp{
+    from{
+        opacity:0;
+        transform:translateY(20px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.glass-card,
+.fin-card,
+div[data-testid="metric-container"]{
+    animation:fadeUp .7s ease;
+}
+
+/* Text Glow */
+h1,h2{
+    text-shadow:
+        0 0 15px rgba(168,85,247,.20);
+}
+
+/* Premium Divider */
+hr{
+    border:none;
+    height:1px;
+
+    background:
+    linear-gradient(
+        90deg,
+        transparent,
+        rgba(168,85,247,.4),
+        transparent
+    );
+}
+            
+            
 </style>
 """, unsafe_allow_html=True)
-
 # ================= SQLITE (LOGIN DB) =================
 conn = sqlite3.connect("users.db", check_same_thread=False)
 c = conn.cursor()
@@ -274,52 +756,79 @@ if "messages" not in st.session_state:
 # ================= AUTH SYSTEM =================
 if not st.session_state.logged_in:
 
+    st.sidebar.image(
+        "https://cdn-icons-png.flaticon.com/512/2092/2092063.png", 
+        width=100
+    )
+
+    st.sidebar.markdown("### AI Financial Intelligence")
+    st.sidebar.markdown("---")
+
     menu = st.sidebar.radio("Navigation", ["Sign In", "Sign Up"])
 
+
     if menu == "Sign Up":
-        st.subheader("📝 Create New Account")
 
-        username = st.text_input("Username")
-        email = st.text_input("Email")
-        password = st.text_input("Password", type="password")
-        confirm_password = st.text_input("Confirm Password", type="password")
+        col1, col2, col3 = st.columns([1,2,1])
 
-        if st.button("Create Account"):
-            if password != confirm_password:
-                st.error("Passwords do not match")
-            elif username == "":
-                st.error("Enter username")
-            else:
-                try:
-                    c.execute(
-                        "INSERT INTO users VALUES(?,?,?)",
-                        (username, email, make_hash(password))
-                    )
-                    conn.commit()
-                    st.success("Account created successfully!")
-                except:
-                    st.error("Username already exists")
+        with col2:
+            st.markdown("""<div class="glass-card">
+                        <h1 style="text-align:center;color:white;">📝 Create New Account</h1>
+                    </div>""", unsafe_allow_html=True)
+
+
+            username = st.text_input("Username")
+            email = st.text_input("Email")
+            password = st.text_input("Password", type="password")
+            confirm_password = st.text_input("Confirm Password", type="password")
+
+            if st.button("Create Account", use_container_width=True):
+                if password != confirm_password:
+                    st.error("Passwords do not match")
+                elif username == "":
+                    st.error("Enter username")
+                else:
+                    try:
+                        c.execute(
+                            "INSERT INTO users VALUES(?,?,?)",
+                            (username, email, make_hash(password))
+                        )
+                        conn.commit()
+                        st.success("Account created successfully!")
+                    except:
+                        st.error("Username already exists")
+
+            st.markdown('</div>', unsafe_allow_html=True)
 
     else:
-        st.subheader("🔑 Login")
 
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        col1, col2, col3 = st.columns([1,2,1])
 
-        if st.button("Sign In"):
-            c.execute(
-                "SELECT * FROM users WHERE username=? AND password=?",
-                (username, make_hash(password))
-            )
-            user = c.fetchone()
+        with col2:
+            st.markdown("""<div class="glass-card">
+                        <h1 style="text-align:center;color:white;">🔑 Login</h1>
+                    </div>""", unsafe_allow_html=True)
 
-            if user:
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.session_state.page = "home"
-                st.rerun()
-            else:
-                st.error("Invalid username or password")
+
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+
+            if st.button("Sign In", use_container_width=True):
+                c.execute(
+                    "SELECT * FROM users WHERE username=? AND password=?",
+                    (username, make_hash(password))
+                )
+                user = c.fetchone()
+
+                if user:
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    st.session_state.page = "home"
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password")
+
+            st.markdown('</div>', unsafe_allow_html=True)
 
 # ================= MAIN APP =================
 else:
@@ -367,7 +876,149 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-    
+        # ================= FINANCIAL TREND =================
+        left,right = st.columns([3,1])
+
+        with left:
+
+            st.markdown("""
+            <div style="
+            background:rgba(20,25,50,.75);
+            padding:25px;
+            border-radius:25px;
+            border:1px solid rgba(168,85,247,.15);
+            box-shadow:0 0 30px rgba(124,58,237,.15);
+            ">
+            <h2 style="
+            color:white;
+            text-align:center;
+            ">
+            📈 FINANCIAL TREND
+            </h2>
+            </div>
+            """, unsafe_allow_html=True)
+
+            fig = go.Figure()
+
+            fig.add_trace(
+                go.Scatter(
+                    x=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+                    y=[12,15,13,18,16,22,25],
+                    mode="lines",
+                    name="Income",
+                    line=dict(
+                        color="#8B5CF6",
+                        width=5,
+                        shape="spline"
+                    ),
+                    fill="tozeroy",
+                    fillcolor="rgba(139,92,246,0.12)"
+                )
+            )
+
+            fig.add_trace(
+                go.Scatter(
+                    x=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+                    y=[18,16,14,15,13,12,10],
+                    mode="lines",
+                    name="Expense",
+                    line=dict(
+                        color="#F9A8D4",
+                        width=5,
+                        shape="spline"
+                    ),
+                    fill="tonexty",
+                    fillcolor="rgba(249,168,212,0.08)"
+                )
+            )
+
+            fig.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                height=420,
+
+                legend=dict(
+                    orientation="h",
+                    y=-0.15
+                ),
+
+                font=dict(color="white"),
+
+                xaxis=dict(showgrid=False),
+
+                yaxis=dict(
+                    showgrid=True,
+                    gridcolor="rgba(255,255,255,0.08)"
+                ),
+
+                margin=dict(
+                    l=10,
+                    r=10,
+                    t=10,
+                    b=10
+                )
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+            st.markdown(
+                "</div>",
+                unsafe_allow_html=True
+            )
+
+        with right:
+
+            st.markdown("""
+            <div style="
+            background:rgba(20,25,50,.75);
+            padding:12px;
+            border-radius:25px;
+            height:190px;
+            border:1px solid rgba(168,85,247,.15);
+            box-shadow:0 0 25px rgba(124,58,237,.20);
+            ">
+
+            <h2 style="
+            text-align:center;
+            color:white;
+            ">
+            📊 FINANCIAL INSIGHTS
+            </h2>
+
+            <div style="height:15px;"></div>
+
+            <div style="
+            background:rgba(124,58,237,.12);
+            padding:8px;
+            border-radius:15px;
+            margin-bottom:10px;
+            ">
+            <b style="color:#A855F7;">📈 Growth</b>
+            <p style="color:white;margin:5px 0;">68%</p>
+            </div>
+
+            <div style="
+            background:rgba(16,185,129,.12);
+            padding:8px;
+            border-radius:15px;
+            margin-bottom:10px;
+            ">
+            <b style="color:#10B981;margin:0;">💰 Revenue</b>
+            <p style="color:white;margin:3px 0;">₹4.5L</p>
+            </div>
+
+            <div style="
+            background:rgba(245,158,11,.12);
+            padding:8px;
+            border-radius:15px;
+            ">
+            <b style="color:#F59E0B;margin:0;">🎁 Bonus</b>
+            <p style="color:white;margin:3px 0;">₹61K</p>
+            </div>
+
+            </div>
+            """, unsafe_allow_html=True)
+
+
         # ================= FIRST ROW =================
         c1, c2, c3, c4 = st.columns(4)
 
