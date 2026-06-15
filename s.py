@@ -47,7 +47,7 @@ footer{
 
 /* Main Container */
 .block-container{
-    padding-top:1rem;
+    padding-top:4rem !important;
     padding-left:2rem;
     padding-right:2rem;
     max-width:95%;
