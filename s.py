@@ -1,4 +1,4 @@
-# app.py
+# s.py
 import streamlit as st
 import sqlite3
 import hashlib
@@ -223,31 +223,31 @@ def get_mysql_connection():
 # ================= LOAD MODELS =================
 @st.cache_resource
 def load_model():
-    return joblib.load("C:\\Users\\user\\Desktop\\Dakshita_04\\Work\\Model 6\\login_security_model.pkl")
+    return joblib.load("login_security_model.pkl")
 
 @st.cache_resource
 def load_fraud_model():
-    return joblib.load("C:\\Users\\user\\Desktop\\Dakshita_04\\Work\\Model 1\\fraud_model.pkl")
+    return joblib.load("fraud_model.pkl")
 
 @st.cache_resource
 def load_encoders():
-    return joblib.load("C:\\Users\\user\\Desktop\\Dakshita_04\\Work\\Model 1\\encoders.pkl")
+    return joblib.load("encoders.pkl")
 
 @st.cache_resource
 def load_loan_model():
-    return joblib.load("C:\\Users\\user\\Desktop\\Dakshita_04\\Work\\Model 4\\loan_risk_model.pkl")
+    return joblib.load("loan_risk_model.pkl")
 
 @st.cache_resource
 def load_currency_model():
-    return joblib.load("C:\\Users\\user\\Desktop\\Dakshita_04\\Work\\Model 8\\currency_model.pkl")
+    return joblib.load("currency_model.pkl")
 
 @st.cache_resource
 def load_base_date():
-    return joblib.load("C:\\Users\\user\\Desktop\\Dakshita_04\\Work\\Model 8\\base_date.pkl")
+    return joblib.load("base_date.pkl")
 
 @st.cache_resource
 def load_stock_model():
-    with open("C:\\Users\\user\\Desktop\\Dakshita_04\\Work\\Model 3\\stock_model.pkl", "rb") as f:
+    with open("stock_model.pkl", "rb") as f:
         return pickle.load(f)
 
 
